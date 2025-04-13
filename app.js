@@ -646,10 +646,23 @@ async function main() {
   } else if (choice === "2") {
     console.clear();
     CoderMark();
+    // comment this if you want to use loop
     // Complete tasks sequentially for each account.
     for (const accountData of loginData) {
       await completeTasks(accountData, agent);
     }
+    // For Loop (bug) uncomment the code below
+    // // Complete tasks sequentially for each account.
+    // console.log(`${Colors.Yellow}Running task completion in a continuous loop. Press Ctrl+C to stop.${Colors.RESET}`);
+    // while (true) {
+    //   for (const accountData of loginData) {
+    //     await completeTasks(accountData, agent);
+    //     // Optional: Add a delay between processing accounts or iterations
+    //     await new Promise(resolve => setTimeout(resolve, 1000)); // Delay of 1 second
+    //   }
+    //   // Optional: Add a delay between full iterations of all accounts
+    //   await new Promise(resolve => setTimeout(resolve, 5000)); // Delay of 5 seconds
+    // }
   } else if (choice === "3") {
     console.clear();
     CoderMark();
