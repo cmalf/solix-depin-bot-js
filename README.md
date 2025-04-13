@@ -64,3 +64,5 @@
 - Automatic Re-Login when Bearer Token Expired
 <img src="https://github.com/user-attachments/assets/1103ed4e-afb1-4b9b-8ea4-e8897a853821" widht=580 height=580 >
 
+- Automatic Task Completion and Reward Claim
+<img src="https://github.com/user-attachments/assets/127dc296-16d2-4f39-bf03-0326e01cf527" widht=580 height=580 >
