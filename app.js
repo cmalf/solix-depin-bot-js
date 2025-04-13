@@ -294,12 +294,12 @@ async function runMiningPoints(accountData, agent, allAccounts) {
 
     const earningColor = profile.isEarning ? Colors.Green : Colors.Red;
     console.log(
-      `${Colors.Teal}]> ${Colors.RESET}isEarning: ${earningColor}${profile.isEarning}${Colors.RESET}`
+      `${Colors.Teal}]> ${Colors.Blue}${masked} ${Colors.RESET}isEarning: ${earningColor}${profile.isEarning}${Colors.RESET}`
     );
 
     const initialTotalPointData = await getTotalPoint(instance);
     if (initialTotalPointData) {
-      console.log(`${Colors.Teal}]> ${Colors.RESET}Points:`);
+      console.log(`${Colors.Teal}]> ${Colors.Blue}${masked} ${Colors.RESET}Points:`);
       console.log(
         `${Colors.Gold}[+] ${Colors.RESET}totalEarningPoint : ${Colors.Cyan}${initialTotalPointData.totalEarningPoint}${Colors.RESET}`
       );
@@ -504,6 +504,7 @@ async function completeTasks(accountData, agent) {
         console.log(
           `${Colors.Teal}]> ${Colors.Green}Task Completed: ${task.name} (ID: ${task._id})${Colors.RESET}`
         );
+        console.log(result);
       } else {
         console.log(
           `${Colors.Teal}]> ${Colors.Red}Cannot complete task: ${task.name} (ID: ${task._id})${Colors.RESET}`
@@ -593,14 +594,18 @@ async function main() {
   console.log(`${Colors.Gold}2. ${Colors.RESET}Complete tasks`);
   console.log(`${Colors.Gold}3. ${Colors.Red}Exit${Colors.RESET}\n`);
 
-  const choice = await prompt(`${Colors.RESET}Enter your choice (1 or 2): `);
+  const choice = await prompt(`${Colors.RESET}Enter your choice (1 or 3): `);
 
   if (choice === "1") {
     console.clear();
     CoderMark();
+    const runningMining = new Set(); // Track accounts being processed
     // Process mining points concurrently for each account.
     for (const accountData of loginData) {
-      runMiningPoints(accountData, agent, allAccounts);
+      if (!runningMining.has(accountData.email)) {
+        runningMining.add(accountData.email);
+        runMiningPoints(accountData, agent, allAccounts);
+      }
     }
   } else if (choice === "2") {
     console.clear();
