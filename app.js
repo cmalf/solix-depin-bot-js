@@ -232,6 +232,21 @@ async function doTask(instance, taskId) {
   return response.data;
 }
 
+async function claimTask(instance, taskId) {
+  const response = await requestWithRetry(
+    () =>
+      instance.post(
+        "/task/claim-task",
+        { taskId },
+        {
+          headers: { "content-type": "application/json" }
+        }
+      ),
+    `claim task ${taskId}`
+  );
+  return response.data;
+}
+
 async function reLogin(accounts, agent) {
   const loginData = [];
   const delayMilliseconds = 5000; // Delay of 5 seconds between logins
@@ -301,7 +316,7 @@ async function runMiningPoints(accountData, agent, allAccounts) {
     if (initialTotalPointData) {
       console.log(`${Colors.Teal}]> ${Colors.Blue}${masked} ${Colors.RESET}Points:`);
       console.log(
-        `${Colors.Gold}[+] ${Colors.RESET}totalEarningPoint : ${Colors.Cyan}${initialTotalPointData.totalEarningPoint}${Colors.RESET}`
+        `${Colors.Gold}[+] ${Colors.RESET}totalPoint : ${Colors.Cyan}${initialTotalPointData.total}${Colors.RESET}`
       );
       console.log(
         `${Colors.Gold}[+] ${Colors.RESET}totalPointInternet : ${Colors.Cyan}${initialTotalPointData.totalPointInternet}${Colors.RESET}`
@@ -374,7 +389,7 @@ async function runMiningPoints(accountData, agent, allAccounts) {
         if (totalPointData) {
           console.log(`\n${Colors.Teal}]> ${Colors.Blue}${masked} ${Colors.RESET}Points Update:`);
           console.log(
-            `${Colors.Gold}[+] ${Colors.RESET}totalEarningPoint : ${Colors.Cyan}${totalPointData.totalEarningPoint}${Colors.RESET}`
+            `${Colors.Gold}[+] ${Colors.RESET}totalPoint : ${Colors.Cyan}${totalPointData.total}${Colors.RESET}`
           );
           console.log(
             `${Colors.Gold}[+] ${Colors.RESET}totalPointInternet : ${Colors.Cyan}${totalPointData.totalPointInternet}${Colors.RESET}`
@@ -504,7 +519,28 @@ async function completeTasks(accountData, agent) {
         console.log(
           `${Colors.Teal}]> ${Colors.Green}Task Completed: ${task.name} (ID: ${task._id})${Colors.RESET}`
         );
-        console.log(result);
+        // Attempt to claim the task after successful completion
+        try {
+          const claimResult = await claimTask(instance, task._id);
+          if (claimResult && claimResult.result === 'success') {
+            console.log(
+              `${Colors.Teal}]> ${Colors.Cyan}Task Claimed: ${task.name} (ID: ${task._id})${Colors.RESET}`
+            );
+            // You might want to log or process the claimResult further
+          } else {
+            console.log(
+              `${Colors.Teal}]> ${Colors.Yellow}Could not claim task: ${task.name} (ID: ${task._id})${Colors.RESET}`,
+              claimResult ? claimResult : '' // Log claimResult if available
+            );
+          }
+        } catch (claimError) {
+          console.error(
+            Colors.Red +
+              `Error claiming task ${task.name} for ${masked}: ` +
+              claimError.message +
+              Colors.RESET
+          );
+        }
       } else {
         console.log(
           `${Colors.Teal}]> ${Colors.Red}Cannot complete task: ${task.name} (ID: ${task._id})${Colors.RESET}`
