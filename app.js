@@ -286,38 +286,13 @@ async function reLogin(accounts, agent) {
   saveLoginData(loginData);
   return loginData;
 }
-// Add new Function EndPoint /auth/refresh
-async function refreshToken(instance, currentAccessToken) {
-  try {
-    const response = await requestWithRetry(
-      () =>
-        instance.post(
-          "/auth/refresh",
-          { refreshToken: currentAccessToken }, // Use the expired accessToken as refreshToken
-          {
-            headers: { "content-type": "application/json" }
-          }
-        ),
-      "refresh token"
-    );
-    if (response.data && response.data.result === "success" && response.data.data.accessToken) {
-      return response.data.data.accessToken;
-    } else {
-      console.error(Colors.Red + "Failed to refresh token." + Colors.RESET);
-      return null;
-    }
-  } catch (error) {
-    console.error(Colors.Red + "Error during token refresh:", error.message + Colors.RESET);
-    return null;
-  }
-}
 
 async function runMiningPoints(accountData, agent, allAccounts) {
   const masked = maskEmail(accountData.email);
   console.log(
     `\n${Colors.Teal}]> ${Colors.Gold}Processing Account: ${Colors.Blue}${masked}${Colors.RESET}`
   );
-  let instance = createAxiosInstance(accountData.accessToken, agent); // Initialize instance here
+  const instance = createAxiosInstance(accountData.accessToken, agent);
 
   try {
     console.log(
@@ -373,40 +348,36 @@ async function runMiningPoints(accountData, agent, allAccounts) {
         if (error instanceof UnauthorizedError) {
           console.log(
             Colors.Yellow +
-              `Unauthorized error in connection quality check for ${masked}. Attempting token refresh.` +
+              `Unauthorized error in connection quality check for ${masked}. Triggering re-login for this account.` +
               Colors.RESET
           );
-          const newAccessToken = await refreshToken(instance, accountData.accessToken);
-          if (newAccessToken) {
-            accountData.accessToken = newAccessToken;
-            instance = createAxiosInstance(newAccessToken, agent); // Update axios instance
-            saveLoginData(globalLoginData); // Save the updated token
-            console.log(Colors.Green + `Token refreshed successfully for ${masked}.` + Colors.RESET);
-            // Continue with the next interval tick with the new token
+          clearInterval(cqIntervalId);
+          clearInterval(pointIntervalId);
+          const accountInfo = allAccounts.find(
+            (acc) => acc.email === accountData.email
+          );
+          const loggedInAccount = await reLogin([accountInfo], agent);
+          if (loggedInAccount && loggedInAccount.length > 0) {
+            accountData.accessToken = loggedInAccount[0].accessToken;
+            console.log(
+              Colors.Green +
+                `Re-login successful for ${masked}. Restarting mining.` +
+                Colors.RESET
+            );
+            runMiningPoints(accountData, agent, allAccounts);
           } else {
             console.error(
-              Colors.Red + `Token refresh failed for ${masked}. Triggering full re-login.` + Colors.RESET
+              Colors.Red +
+                `Re-login failed for ${masked}. Mining will not be restarted for this account.` +
+                Colors.RESET
             );
-            clearInterval(cqIntervalId);
-            clearInterval(pointIntervalId);
-            const accountInfo = allAccounts.find((acc) => acc.email === accountData.email);
-            const loggedInAccount = await reLogin([accountInfo], agent);
-            if (loggedInAccount && loggedInAccount.length > 0) {
-              accountData.accessToken = loggedInAccount[0].accessToken;
-              instance = createAxiosInstance(accountData.accessToken, agent); // Update axios instance
-              saveLoginData(globalLoginData); // Save the updated token
-              console.log(Colors.Green + `Re-login successful for ${masked}. Restarting mining.` + Colors.RESET);
-              runMiningPoints(accountData, agent, allAccounts);
-            } else {
-              console.error(
-                Colors.Red + `Re-login failed for ${masked}. Mining will not be restarted.` + Colors.RESET
-              );
-            }
           }
         } else {
           console.error(
-            Colors.Red + `Error during connection quality interval for ${masked}:`,
-            error.message + Colors.RESET
+            Colors.Red +
+              `Error during connection quality interval for ${masked}: ` +
+              error.message +
+              Colors.RESET
           );
         }
       }
@@ -434,79 +405,79 @@ async function runMiningPoints(accountData, agent, allAccounts) {
         if (error instanceof UnauthorizedError) {
           console.log(
             Colors.Yellow +
-              `Unauthorized error in point update for ${masked}. Attempting token refresh.` +
+              `Unauthorized error in point update for ${masked}. Triggering re-login for this account.` +
               Colors.RESET
           );
-          const newAccessToken = await refreshToken(instance, accountData.accessToken);
-          if (newAccessToken) {
-            accountData.accessToken = newAccessToken;
-            instance = createAxiosInstance(newAccessToken, agent); // Update axios instance
-            saveLoginData(globalLoginData); // Save the updated token
-            console.log(Colors.Green + `Token refreshed successfully for ${masked}.` + Colors.RESET);
-            // Continue with the next interval tick with the new token
+          clearInterval(cqIntervalId);
+          clearInterval(pointIntervalId);
+          const accountInfo = allAccounts.find(
+            (acc) => acc.email === accountData.email
+          );
+          const loggedInAccount = await reLogin([accountInfo], agent);
+          if (loggedInAccount && loggedInAccount.length > 0) {
+            accountData.accessToken = loggedInAccount[0].accessToken;
+            console.log(
+              Colors.Green +
+                `Re-login successful for ${masked}. Restarting mining.` +
+                Colors.RESET
+            );
+            runMiningPoints(accountData, agent, allAccounts);
           } else {
             console.error(
-              Colors.Red + `Token refresh failed for ${masked}. Triggering full re-login.` + Colors.RESET
+              Colors.Red +
+                `Re-login failed for ${masked}. Mining will not be restarted for this account.` +
+                Colors.RESET
             );
-            clearInterval(cqIntervalId);
-            clearInterval(pointIntervalId);
-            const accountInfo = allAccounts.find((acc) => acc.email === accountData.email);
-            const loggedInAccount = await reLogin([accountInfo], agent);
-            if (loggedInAccount && loggedInAccount.length > 0) {
-              accountData.accessToken = loggedInAccount[0].accessToken;
-              instance = createAxiosInstance(accountData.accessToken, agent); // Update axios instance
-              saveLoginData(globalLoginData); // Save the updated token
-              console.log(Colors.Green + `Re-login successful for ${masked}. Restarting mining.` + Colors.RESET);
-              runMiningPoints(accountData, agent, allAccounts);
-            } else {
-              console.error(
-                Colors.Red + `Re-login failed for ${masked}. Mining will not be restarted.` + Colors.RESET
-              );
-            }
           }
         } else {
           console.error(
-            Colors.Red + `Error during point update interval for ${masked}:`,
-            error.message + Colors.RESET
+            Colors.Red +
+              `Error during point update interval for ${masked}: ` +
+              error.message +
+              Colors.RESET
           );
         }
       }
     }, 600000);
 
+    // Store interval IDs for later clearance if necessary.
     accountData.cqIntervalId = cqIntervalId;
     accountData.pointIntervalId = pointIntervalId;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       console.log(
-        Colors.Yellow + `Unauthorized error for ${masked}. Attempting token refresh.` + Colors.RESET
+        Colors.Yellow +
+          `Unauthorized error for ${masked}. Triggering re-login for this account.` +
+          Colors.RESET
       );
-      const newAccessToken = await refreshToken(instance, accountData.accessToken);
-      if (newAccessToken) {
-        accountData.accessToken = newAccessToken;
-        instance = createAxiosInstance(newAccessToken, agent); // Update axios instance
-        saveLoginData(globalLoginData); // Save the updated token
-        console.log(Colors.Green + `Token refreshed successfully for ${masked}.` + Colors.RESET);
-        // Continue execution with the new token (no need to restart runMiningPoints here)
+      if (accountData.cqIntervalId) clearInterval(accountData.cqIntervalId);
+      if (accountData.pointIntervalId) clearInterval(accountData.pointIntervalId);
+      const accountInfo = allAccounts.find(
+        (acc) => acc.email === accountData.email
+      );
+      const loggedInAccount = await reLogin([accountInfo], agent);
+      if (loggedInAccount && loggedInAccount.length > 0) {
+        accountData.accessToken = loggedInAccount[0].accessToken;
+        console.log(
+          Colors.Green +
+            `Re-login successful for ${masked}. Restarting mining.` +
+            Colors.RESET
+        );
+        runMiningPoints(accountData, agent, allAccounts);
       } else {
-        console.error(Colors.Red + `Token refresh failed for ${masked}. Triggering full re-login.` + Colors.RESET);
-        if (accountData.cqIntervalId) clearInterval(accountData.cqIntervalId);
-        if (accountData.pointIntervalId) clearInterval(accountData.pointIntervalId);
-        const accountInfo = allAccounts.find((acc) => acc.email === accountData.email);
-        const loggedInAccount = await reLogin([accountInfo], agent);
-        if (loggedInAccount && loggedInAccount.length > 0) {
-          accountData.accessToken = loggedInAccount[0].accessToken;
-          instance = createAxiosInstance(accountData.accessToken, agent); // Update axios instance
-          saveLoginData(globalLoginData); // Save the updated token
-          console.log(Colors.Green + `Re-login successful for ${masked}. Restarting mining.` + Colors.RESET);
-          runMiningPoints(accountData, agent, allAccounts);
-        } else {
-          console.error(
-            Colors.Red + `Re-login failed for ${masked}. Mining will not be restarted.` + Colors.RESET
-          );
-        }
+        console.error(
+          Colors.Red +
+            `Re-login failed for ${masked}. Mining will not be restarted for this account.` +
+            Colors.RESET
+        );
       }
     } else {
-      console.error(Colors.Red + `Error processing account ${masked}:`, error.message + Colors.RESET);
+      console.error(
+        Colors.Red +
+          `Error processing account ${masked}: ` +
+          error.message +
+          Colors.RESET
+      );
     }
   }
 }
@@ -675,18 +646,21 @@ async function main() {
   } else if (choice === "2") {
     console.clear();
     CoderMark();
-    // comment out this if you want to use loop mode
+    // comment this if you want to use loop
     // Complete tasks sequentially for each account.
     for (const accountData of loginData) {
       await completeTasks(accountData, agent);
     }
-    // For Loop (bug Reward) uncomment the code below
+    // For Loop (bug) uncomment the code below
+    // // Complete tasks sequentially for each account.
     // console.log(`${Colors.Yellow}Running task completion in a continuous loop. Press Ctrl+C to stop.${Colors.RESET}`);
     // while (true) {
     //   for (const accountData of loginData) {
     //     await completeTasks(accountData, agent);
+    //     // Optional: Add a delay between processing accounts or iterations
     //     await new Promise(resolve => setTimeout(resolve, 1000)); // Delay of 1 second
     //   }
+    //   // Optional: Add a delay between full iterations of all accounts
     //   await new Promise(resolve => setTimeout(resolve, 5000)); // Delay of 5 seconds
     // }
   } else if (choice === "3") {
