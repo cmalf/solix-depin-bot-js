@@ -111,17 +111,17 @@ async function requestWithRetry(requestFn, description) {
       } else if (error.response && error.response.status) {
         console.error(
           Colors.Red +
-          `Error in ${description}: `+ Colors.Red +` HTTP ${error.response.status} - ${error.response.statusText}. ` + Colors.Gold + `Retrying in 5 seconds...` +
+          `Error in ${description}: `+ Colors.Red +` HTTP ${error.response.status} - ${error.response.statusText}. ` + Colors.Gold + `Retrying in 30 seconds...` +
           Colors.RESET
         );
       } else {
         console.error(
           Colors.Red +
-          `Error in ${description}: ` + Colors.Red +`${error.message}.` + Colors.Gold +`Retrying in 15 seconds...` +
+          `Error in ${description}: ` + Colors.Red +`${error.message}.` + Colors.Gold +`Retrying in 30 seconds...` +
           Colors.RESET
         );
       }
-      await new Promise(resolve => setTimeout(resolve, 15000));
+      await new Promise(resolve => setTimeout(resolve, 30000));
     }
   }
 }
