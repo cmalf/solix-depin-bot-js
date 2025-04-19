@@ -250,7 +250,7 @@ async function reLogin(accounts, agent) {
     const newLoginData = [];
     const existingLoginData = loadLoginData() || []; // Load existing data
     const updatedLoginData = [...existingLoginData]; // Start with existing data
-    const delayMilliseconds = 5000; // Delay of 5 seconds between logins
+    const delayMilliseconds = 30000; // Delay of 30 seconds between logins
 
     for (let i = 0; i < accounts.length; i++) {
         const account = accounts[i];
@@ -674,7 +674,7 @@ async function main() {
         //    for (const accountData of loginData) {
         //      await completeTasks(accountData, agent);
         //      // Optional: Add a delay between processing accounts or iterations
-        //      await new Promise(resolve => setTimeout(resolve, 1000)); // Delay of 1 second
+        //      await new Promise(resolve => setTimeout(resolve, 5000)); // Delay of 5 second
         //    }
         //    // Optional: Add a delay between full iterations of all accounts
         //    await new Promise(resolve => setTimeout(resolve, 5000)); // Delay of 5 seconds
