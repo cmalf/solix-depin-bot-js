@@ -1,0 +1,6 @@
+accounts:
+  - email: "cmalf@gmail.com"
+    password: "cmalf123"
+  - email: "cmalf1@cmalf.com"
+    password: "cmalf123"
+  # Add more accounts as needed
